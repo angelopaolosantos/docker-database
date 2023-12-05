@@ -1,0 +1,61 @@
+version: "3"
+services:
+  mysqlDB:
+    container_name: mysqlDB
+    platform: linux/amd64 #for platform error on Apple M1 chips
+    restart: unless-stopped
+    env_file: .env
+    image: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DATABASE_PASSWORD}
+    volumes:
+      - mysql-data:/var/lib/mysql #using a volume
+      #- ./data:/var/lib/mysql # if you want to use a bind folder
+    
+    # Uncomment to expose mysql to port 3306 
+    # ports:
+    #   - "3306:3306" 
+    
+    networks:
+      - docker-db-network
+
+  postgresDB:
+    container_name: postgresDB
+    platform: linux/amd64 #for platform error on Apple M1 chips
+    restart: unless-stopped
+    env_file: .env
+    image: postgres:12.0-alpine
+    environment:
+      POSTGRES_USER: ${DATABASE_USERNAME}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data/ #using a volume
+      #- ./data:/var/lib/postgresql/data/ # if you want to use a bind folder
+
+    # Uncomment to expose postgres to port 5432 
+    # ports:
+    #   - "5432:5432"
+    networks:
+      - docker-db-network
+
+  adminer:
+    container_name: adminer_container
+    image: adminer
+    restart: always
+    ports:
+      - 5050:8080
+    depends_on:
+      - mysqlDB
+      - postgresDB
+    networks:
+      - docker-db-network
+
+volumes:
+  mysql-data:
+  postgres-data:
+
+networks:
+  docker-database-network:
+    name: docker-database
+    driver: bridge
